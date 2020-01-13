@@ -1,33 +1,24 @@
 package minesweeper.command;
 
-import minesweeper.exception.MoveOutOfBoundsException;
 import minesweeper.game.GameEngine;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import minesweeper.validator.RulesValidator;
 
 public class DigCommand implements Command {
-
-    private final Logger log = LogManager.getLogger(this.getClass());
 
     private final int row;
     private final int column;
 
     public DigCommand(int row, int column) {
-        this.row = row;
-        this.column = column;
+        this.row = row + 1;
+        this.column = column + 1;
     }
 
     @Override
     public void execute(GameEngine engine) {
-        if (engine.isRunning()) {
-            try {
-                engine.dig(row, column);
-            } catch (MoveOutOfBoundsException e) {
-                log.warn("Command failed. Reason: {}", e.getMessage());
-            }
-            engine.checkGameStatus();
-        } else {
-            log.warn("Game is over. Start a new game.");
-        }
+        RulesValidator.validateGameRunning(engine);
+        RulesValidator.validateMoveWithinBounds(engine, row, column);
+
+        engine.dig(row, column);
+        engine.checkGameStatus();
     }
 }

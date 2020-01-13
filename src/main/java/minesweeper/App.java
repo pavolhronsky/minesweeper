@@ -2,7 +2,8 @@ package minesweeper;
 
 import minesweeper.command.Command;
 import minesweeper.command.CommandFactory;
-import minesweeper.exception.*;
+import minesweeper.exception.command.CommandException;
+import minesweeper.exception.rule.RuleException;
 import minesweeper.game.GameEngine;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,8 +39,10 @@ public class App {
                 Command command = factory.create(input);
                 command.execute(engine);
                 engine.display();
-            } catch (EmptyCommandException | CommandNotFoundException | InvalidNumberOfParametersException | InvalidNumberOfMinesException | InvalidDimensionException | NumberFormatException e) {
+            } catch (CommandException | NumberFormatException e) {
                 log.warn("Command failed. Reason: {}", e.getMessage(), e);
+            } catch (RuleException e) {
+                log.warn("Rule violation: {}", e.getMessage(), e);
             }
         }
     }

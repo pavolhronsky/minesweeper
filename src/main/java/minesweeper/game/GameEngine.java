@@ -1,7 +1,6 @@
 package minesweeper.game;
 
-import minesweeper.Validator;
-import minesweeper.exception.MoveOutOfBoundsException;
+import minesweeper.validator.RulesValidator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,12 +17,17 @@ public class GameEngine {
 
     private Minesweeper minesweeper;
 
+    public int getHeight() {
+        return minesweeper.getHeight();
+    }
+
+    public int getWidth() {
+        return minesweeper.getWidth();
+    }
+
     public void display() {
-        if (!minesweeperExists()) {
-            return;
-        }
-        for (int row = 1; row <= minesweeper.getHeight(); row++) {
-            for (int column = 1; column <= minesweeper.getWidth(); column++) {
+        for (int row = 1; row <= getHeight(); row++) {
+            for (int column = 1; column <= getWidth(); column++) {
                 if (isFlagged(row, column)) {
                     System.out.print("F");
                 } else if (isHidden(row, column)) {
@@ -61,36 +65,41 @@ public class GameEngine {
     }
 
     public void create(int width, int height, long numberOfMines) {
+        int extendedWidth = width + 2;
+        int extendedHeight = height + 2;
+
         createMinesweeper(width, height, numberOfMines);
-        setBoundaries(width, height);
+        setBoundaries(extendedWidth, extendedHeight);
         setMines(width, height, numberOfMines);
-        populateOtherFields(width, height);
+        populateOtherFields(extendedWidth, extendedHeight);
         startGame();
     }
 
     private void createMinesweeper(int width, int height, long numberOfMines) {
+        RulesValidator.validateNumberOfMines(width, height, numberOfMines);
+
         minesweeper = new Minesweeper();
         int[][] fields = new int[height + 2][width + 2];
         minesweeper.setFields(fields);
         minesweeper.setNumberOfMines(numberOfMines);
     }
 
-    private void setBoundaries(int width, int height) {
-        setFirstAndLastColumn(width, height);
-        setFirstAndLastRow(width, height);
+    private void setBoundaries(int extendedWidth, int extendedHeight) {
+        setFirstAndLastColumn(extendedWidth, extendedHeight);
+        setFirstAndLastRow(extendedWidth, extendedHeight);
     }
 
-    private void setFirstAndLastColumn(int width, int height) {
-        for (int row = 0; row < height + 2; row++) {
+    private void setFirstAndLastColumn(int extendedWidth, int extendedHeight) {
+        for (int row = 0; row < extendedHeight; row++) {
             minesweeper.setField(row, 0, 100);
-            minesweeper.setField(row, width + 1, 100);
+            minesweeper.setField(row, extendedWidth - 1, 100);
         }
     }
 
-    private void setFirstAndLastRow(int width, int height) {
-        for (int column = 0; column < width + 2; column++) {
+    private void setFirstAndLastRow(int extendedWidth, int extendedHeight) {
+        for (int column = 0; column < extendedWidth; column++) {
             minesweeper.setField(0, column, 100);
-            minesweeper.setField(height + 1, column, 100);
+            minesweeper.setField(extendedHeight - 1, column, 100);
         }
     }
 
@@ -107,9 +116,9 @@ public class GameEngine {
         }
     }
 
-    private void populateOtherFields(int width, int height) {
-        for (int row = 1; row <= height; row++) {
-            for (int column = 1; column <= width; column++) {
+    private void populateOtherFields(int extendedWidth, int extendedHeight) {
+        for (int row = 1; row < extendedHeight - 1; row++) {
+            for (int column = 1; column < extendedWidth - 1; column++) {
                 if (isMine(row, column)) {
                     continue;
                 }
@@ -152,9 +161,7 @@ public class GameEngine {
         minesweeper.setRunning(true);
     }
 
-    public void dig(int row, int column) throws MoveOutOfBoundsException {
-        Validator.validateMoveWithinBounds(minesweeper.getHeight(), minesweeper.getWidth(), row, column);
-
+    public void dig(int row, int column) {
         if (isFlagged(row, column) || isUncoveredField(row, column)) {
             return;
         }
@@ -201,14 +208,14 @@ public class GameEngine {
 
     private boolean isWin() {
         long numberOfUncoveredFields = 0L;
-        for (int row = 1; row <= minesweeper.getHeight(); row++) {
-            for (int column = 1; column <= minesweeper.getWidth(); column++) {
+        for (int row = 1; row <= getHeight(); row++) {
+            for (int column = 1; column <= getWidth(); column++) {
                 if (isUncoveredNonBomb(row, column)) {
                     numberOfUncoveredFields++;
                 }
             }
         }
-        return minesweeper.getWidth() * minesweeper.getHeight() - numberOfUncoveredFields == minesweeper.getNumberOfMines();
+        return getWidth() * getHeight() - numberOfUncoveredFields == minesweeper.getNumberOfMines();
     }
 
     private boolean isUncoveredNonBomb(int row, int column) {
@@ -216,8 +223,8 @@ public class GameEngine {
     }
 
     private boolean isLost() {
-        for (int row = 1; row <= minesweeper.getHeight(); row++) {
-            for (int column = 1; column <= minesweeper.getWidth(); column++) {
+        for (int row = 1; row <= getHeight(); row++) {
+            for (int column = 1; column <= getWidth(); column++) {
                 if (isUncoveredBomb(row, column)) {
                     return true;
                 }
@@ -230,8 +237,7 @@ public class GameEngine {
         minesweeper.setRunning(false);
     }
 
-    public void setFlag(int row, int column) throws MoveOutOfBoundsException {
-        Validator.validateMoveWithinBounds(minesweeper.getHeight(), minesweeper.getWidth(), row, column);
+    public void setFlag(int row, int column) {
         minesweeper.setField(row, column, minesweeper.getField(row, column) + 100);
     }
 
